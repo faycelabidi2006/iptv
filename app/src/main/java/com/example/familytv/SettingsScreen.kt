@@ -3,6 +3,8 @@ package com.example.familytv
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,6 +52,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -148,6 +151,9 @@ private fun rememberImportPicker(vm: MainViewModel, onClose: () -> Unit): () -> 
     return { picker.launch(arrayOf("*/*")) }
 }
 
+// نافذة عريضة بدل العرض الافتراضي الضيق، لتناسب الوضع الأفقي على الهاتف
+private val wideDialog = DialogProperties(usePlatformDefaultWidth = false)
+
 @Composable
 private fun AddPlaylistDialog(vm: MainViewModel, onAdd: (String, String) -> Unit, onClose: () -> Unit) {
     var name by remember { mutableStateOf("") }
@@ -155,15 +161,19 @@ private fun AddPlaylistDialog(vm: MainViewModel, onAdd: (String, String) -> Unit
     val pickFile = rememberImportPicker(vm, onClose)
     AlertDialog(
         onDismissRequest = onClose,
+        modifier = Modifier.fillMaxWidth(0.85f),
+        properties = wideDialog,
         title = { Text("Add Playlist (M3U)") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = pickFile, modifier = Modifier.fillMaxWidth().focusBorder()) {
                     Text("Import from file (M3U or Xtream details)")
                 }
                 Text("or enter a link manually:")
-                OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true)
-                OutlinedTextField(url, { url = it }, label = { Text("M3U link") }, singleLine = true)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true, modifier = Modifier.weight(1f))
+                    OutlinedTextField(url, { url = it }, label = { Text("M3U link") }, singleLine = true, modifier = Modifier.weight(2f))
+                }
             }
         },
         confirmButton = {
@@ -182,19 +192,38 @@ private fun XtreamDialog(vm: MainViewModel, onClose: () -> Unit) {
     val pickFile = rememberImportPicker(vm, onClose)
     AlertDialog(
         onDismissRequest = onClose,
+        modifier = Modifier.fillMaxWidth(0.85f),
+        properties = wideDialog,
         title = { Text("Add Xtream Account") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = pickFile, modifier = Modifier.fillMaxWidth().focusBorder()) {
                     Text("Import details from file")
                 }
-                OutlinedTextField(name, { name = it }, label = { Text("Name (optional)") }, singleLine = true)
-                OutlinedTextField(server, { server = it }, label = { Text("Server  (http://host:port)") }, singleLine = true)
-                OutlinedTextField(user, { user = it }, label = { Text("Username") }, singleLine = true)
-                OutlinedTextField(
-                    pass, { pass = it }, label = { Text("Password") }, singleLine = true,
-                    visualTransformation = PasswordVisualTransformation()
-                )
+                // عمودان جنباً إلى جنب ليتسع المحتوى في الشاشة الأفقية
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            name, { name = it }, label = { Text("Name (optional)") },
+                            singleLine = true, modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            server, { server = it }, label = { Text("Server (http://host:port)") },
+                            singleLine = true, modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            user, { user = it }, label = { Text("Username") },
+                            singleLine = true, modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            pass, { pass = it }, label = { Text("Password") }, singleLine = true,
+                            visualTransformation = PasswordVisualTransformation(),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
             }
         },
         confirmButton = {
